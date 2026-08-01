@@ -267,6 +267,27 @@ header{display:flex; align-items:center; justify-content:space-between; gap:14px
 }
 .hintline{font-size:11px; font-weight:700; color:var(--ink-soft); margin-top:7px; line-height:1.4;}
 
+/* mount picker */
+.mounts{display:flex; gap:7px; padding:0 14px 12px;}
+.mountbtn{
+  flex:1; border:3px solid var(--panel-line); background:#F2F4FB; cursor:pointer;
+  padding:9px 4px; font-family:'Press Start 2P',monospace; font-size:7px; min-height:52px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+}
+.mountbtn .mi{font-size:17px;}
+.mountbtn:active{transform:translate(2px,2px);}
+.card.flynn .mountbtn.on{background:var(--flynn); color:#fff;}
+.card.avery .mountbtn.on{background:var(--avery); color:#fff;}
+
+/* editable calendar days */
+.cday.editable{cursor:pointer;}
+.cday.editable:active{transform:translate(1px,1px);}
+#dayModal .box{border-color:var(--panel-line);}
+#dayModal.flynn .box.on{background:var(--flynn);}
+#dayModal.avery .box.on{background:var(--avery);}
+#dayTasks{padding:0; margin-top:12px;}
+#dayBanked{font-family:'Press Start 2P',monospace; font-size:8px; color:var(--green); min-height:12px;}
+
 /* backup box */
 .backup textarea{
   width:100%; height:104px; border:3px solid #C9CFE4; padding:10px;
@@ -391,6 +412,7 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
           <div class="hero idle" id="hero-flynn"></div>
         </div>
       </div>
+      <div class="mounts" id="mounts-flynn"></div>
       <div class="badges" id="badges-flynn"></div>
     </div>
 
@@ -425,11 +447,12 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
           <div class="hero idle" id="hero-avery"></div>
         </div>
       </div>
+      <div class="mounts" id="mounts-avery"></div>
       <div class="badges" id="badges-avery"></div>
     </div>
   </div>
 
-  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 4 &middot; STAR ICON</span></footer>
+  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 5 &middot; RIDES + BACKFILL</span></footer>
 </div>
 
 <div class="ov" id="ov">
@@ -458,6 +481,19 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
     <div class="acts">
       <button class="btn" id="cancelBtn">CANCEL</button>
       <button class="btn pri" id="saveBtn">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="dayOv">
+  <div class="modal" id="dayModal">
+    <h2 class="pix" id="dayTitle">EDIT DAY</h2>
+    <div class="hintline" id="daySub"></div>
+    <div class="hintline" id="dayBanked"></div>
+    <ul class="tasks" id="dayTasks"></ul>
+    <div class="acts">
+      <button class="btn" id="dayAll">TICK ALL</button>
+      <button class="btn pri" id="dayClose">DONE</button>
     </div>
   </div>
 </div>
@@ -534,11 +570,70 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
   ];
 
 
+  const MAP_RABBIT = [
+    ".............rrrrrr...............",
+    "............rrrrrrrrv...uuu.uuu...",
+    "............rrrrrrrr.v..uuu.uuu...",
+    "...........rrssssssrr...utu.utu...",
+    "...........rrpesseprr...utu.utu...",
+    "...........rrssmmssrr...utu.utu...",
+    ".....ffff..rrssssssrr...utu.utu...",
+    "....fffffffrrpppppppr...utu.utu...",
+    "...fffffffpppppppppppppsutu.utu...",
+    "..fffofffspppppppppp....utu.utu...",
+    ".fffofffofff.ppppppp....uuuuuuuu..",
+    ".fffffoffff.qqqqqqqqq.uuuuuuuuuuu.",
+    "..ffffffuuuuuussuuuuuuuuuuuuuuuuu.",
+    "..fffuuuuuuuuussuuuuuuuuueuuuueuu.",
+    ".....uuuuuuuuussuuuuuuuuuuuuuuuuu.",
+    "..offfuuuuuuuuwwuuuuuuuuuuuttuuuuo",
+    "..ffffuuuuuuuuuuuuuuuuuuuujuujuuuo",
+    "..ffffuuuuffffffffuuuuuuuuuuuuuuu.",
+    "..offfuuuuffffffffuuuuuuuuuuuuuuu.",
+    ".....uuuuuffffffffuuuuuujjjjjjjj..",
+    ".....uuuuuuuuuuuuuuuuuuu..........",
+    ".......juuuujjjjjuuuujj...........",
+    "........uuuu.....uuuu.............",
+    "........uuuu.....uuuu.............",
+    ".......jjjjjj...jjjjjj............",
+    "..................................",
+  ];
+  const MAP_HOVER = [
+    "..................................",
+    "..................................",
+    "..............hhhhh...............",
+    ".............hhhhhhh..............",
+    ".............hhhhhhh..............",
+    "..............hhhhh...............",
+    "..............seses...............",
+    "..............smmms...............",
+    ".............bbbbbbb..............",
+    "xxxxx.ssbbbbbbbbbbbbbbbbbss.......",
+    ".............bbbbbbb..............",
+    ".............bbbbbbb..............",
+    ".............bbbbbbb..............",
+    "xxxx.........nnn.nnn..............",
+    ".............nnn.nnn..............",
+    ".............nnn.nnn..............",
+    "...........nnnn...nnnn............",
+    "xxxxxx.....nnnn...nnnn............",
+    ".........akkkkkaaakkkkkaaaa.......",
+    "......zzzzzzzzzzzzzzzzzzzzzzz.....",
+    ".......zzzzaaazzzzzzzzaaazzzzz....",
+    ".........zzaaazzzzzzzzaaazz.......",
+    ".........xxxxxxxxxxxxxxxxxx.......",
+    "...........xxxxxxxxxxxxxx.........",
+    "..............xx....xx............",
+    "..................................",
+  ];
+
 const PAL = {
   k:'#1F2937', g:'#5FBF7F', d:'#34855B', l:'#BFF0D0', s:'#F5C89E', h:'#3B2A20',
   b:'#2F80ED', n:'#1F5FC4', w:'#FFFFFF', e:'#22314A', m:'#C4685E',
   p:'#F17FB1', q:'#D6538F', r:'#5B3A29', i:'#B9BEC9', v:'#8B6BFF',
-  c:'#FFFFFF', o:'#DEE2E8', y:'#FFC94D'
+  c:'#FFFFFF', o:'#DEE2E8', y:'#FFC94D',
+  u:'#B07C4F', j:'#8A5C36', f:'#FFF3E0', t:'#F0A9B8',
+  z:'#37406B', x:'#5FE0F5', a:'#9AA3C0'
 };
 
 /* run-length pixel renderer */
@@ -571,12 +666,31 @@ const KIDS = ['flynn','avery'];
 const BASE = [
   {id:'dressed',   icon:'👕', label:'Get dressed — clothes & shoes on, PJs away'},
   {id:'hygiene',   icon:'🪥', label:'Brush teeth & wash face'},
+  {id:'hair',      icon:'💇', label:'Brush hair'},
   {id:'breakfast', icon:'🥣', label:'Eat breakfast & clean up after'},
-  {id:'drink',     icon:'💧', label:'Fill drink bottle & put in school bag'},
-  {id:'lunchbox',  icon:'🍱', label:'Pack lunch box in bag'},
-  {id:'toys',      icon:'🧸', label:'Clean up toys before 8:15', tag:'8:15'},
-  {id:'carbag',    icon:'🚗', label:'Pack bag in the car'}
+  {id:'drink',     icon:'💧', label:'Fill drink bottle & put in school bag', school:true},
+  {id:'lunchbox',  icon:'🍱', label:'Pack lunch box in bag', school:true},
+  {id:'toys',      icon:'🧸', label:'Clean up toys'},
+  {id:'rubbish',   icon:'🗑️', label:'Take out the rubbish'},
+  {id:'carbag',    icon:'🚗', label:'Pack bag in the car', school:true}
 ];
+
+/* mounts the kids can ride along their progress bar */
+const MOUNTS = {
+  dino:   {label:'DINO',   icon:'🦕'},
+  hover:  {label:'HOVER',  icon:'🛹'},
+  rabbit: {label:'RABBIT', icon:'🐰'},
+  skates: {label:'SKATES', icon:'⛸️'}
+};
+const KID_MOUNTS = { flynn:['dino','hover'], avery:['rabbit','skates'] };
+function mountMap(id){
+  return id==='dino' ? MAP_FLYNN : id==='hover' ? MAP_HOVER
+       : id==='rabbit' ? MAP_RABBIT : MAP_AVERY;
+}
+function mountOf(kid){
+  const m = (settings.mount||{})[kid];
+  return KID_MOUNTS[kid].includes(m) ? m : KID_MOUNTS[kid][0];
+}
 
 const BADGES = [
   {at:5,  icon:'🌱'}, {at:10, icon:'⭐'}, {at:15, icon:'🔥'},
@@ -593,7 +707,8 @@ const DEFAULTS = {
   library:{flynn:2, avery:4},
   goalDays:20,
   prizeText:'A special treat of their choice!',
-  challengeStart: dateStr
+  challengeStart: dateStr,
+  mount:{flynn:'dino', avery:'rabbit'}
 };
 
 let settings = JSON.parse(JSON.stringify(DEFAULTS));
@@ -741,15 +856,26 @@ function dustAt(route, left){
 }
 
 /* ---------- tasks ---------- */
-function tasksFor(kid){
+function tasksFor(kid, ds){
+  const d = ds || dateStr;
+  const day = new Date(d + 'T00:00:00').getDay();
+  const weekend = (day === 0 || day === 6);
+  const toyTime = weekend ? '9:30' : '8:15';
   const list = [];
-  const piano = settings.piano[kid]||[];
-  if(piano.includes(wd)){
+
+  if((settings.piano[kid]||[]).includes(day)){
     list.push({id:'piano', icon:'🎹', label:'Pack piano folder & get Mum to sign', tag:'PIANO'});
   }
-  BASE.forEach(t=>list.push(t));
-  if(wd===2) list.push({id:'band', icon:'🎺', label:'Pack band folder in bag', tag:'BAND'});
-  if(settings.library[kid]===wd) list.push({id:'library', icon:'📚', label:'Pack library books', tag:'LIB'});
+  BASE.forEach(t=>{
+    if(weekend && t.school) return;                 // no school gear on weekends
+    if(t.id === 'toys'){
+      list.push({id:'toys', icon:'🧸', label:'Clean up toys before ' + toyTime, tag:toyTime});
+    } else {
+      list.push(t);
+    }
+  });
+  if(!weekend && day === 2) list.push({id:'band', icon:'🎺', label:'Pack band folder in bag', tag:'BAND'});
+  if(!weekend && settings.library[kid] === day) list.push({id:'library', icon:'📚', label:'Pack library books', tag:'LIB'});
   return list;
 }
 
@@ -898,10 +1024,15 @@ function renderHistory(kid){
     const key = ymd(v.y, v.m, d);
     const done = set.has(key);
     if(done) monthCount++;
-    const cls = 'cday' + (done?' done':'') + (key===dateStr?' today':'') + (key>dateStr?' future':'');
-    html += `<div class="${cls}"><span class="dn">${d}</span>${done?'<span class="dm">⭐</span>':''}</div>`;
+    const future = key > dateStr;
+    const cls = 'cday' + (done?' done':'') + (key===dateStr?' today':'') + (future?' future':' editable');
+    const attr = future ? '' : ` data-date="${key}" data-kid="${kid}"`;
+    html += `<div class="${cls}"${attr}><span class="dn">${d}</span>${done?'<span class="dm">⭐</span>':''}</div>`;
   }
   grid.innerHTML = html;
+  grid.querySelectorAll('.cday.editable').forEach(cell=>{
+    cell.addEventListener('click', ()=>openDayEditor(cell.dataset.kid, cell.dataset.date));
+  });
 
   document.getElementById('calm-'+kid).textContent = MONTHS[v.m] + ' ' + v.y;
 
@@ -933,39 +1064,150 @@ function renderQuest(){
 }
 
 /* ---------- interactions ---------- */
+/* Decides whether a given date counts as a cleared day, for today or any past day. */
+async function rebank(kid, ds, state){
+  const list = tasksFor(kid, ds);
+  const all = list.length > 0 && list.every(t => state.checked[t.id]);
+  const banked = log[kid].includes(ds);
+  if(all && !banked){
+    log[kid].push(ds); log[kid].sort();
+    await sset(`log:${kid}`, log[kid]);
+    return 'banked';
+  }
+  if(!all && banked){
+    log[kid] = log[kid].filter(d => d !== ds);
+    await sset(`log:${kid}`, log[kid]);
+    return 'unbanked';
+  }
+  return null;
+}
+
 async function onToggle(kid, id, on){
   dayState[kid].checked[id] = on;
   await sset(`day:${kid}:${dateStr}`, dayState[kid]);
   updateCount(kid);
-
   on ? sfx.tick() : sfx.untick();
 
-  const list = tasksFor(kid);
-  const all = list.length>0 && list.every(t=>dayState[kid].checked[t.id]);
-  const banked = log[kid].includes(dateStr);
   const beforeLvl = levelOf(kid), beforeN = cleared(kid).length;
-
-  if(all && !banked){
-    log[kid].push(dateStr);
-    log[kid].sort();
-    await sset(`log:${kid}`, log[kid]);
+  const result = await rebank(kid, dateStr, dayState[kid]);
+  if(result){
     refresh(kid);
-    celebrate(kid, beforeLvl, beforeN);
-  } else if(!all && banked){
-    log[kid] = log[kid].filter(d=>d!==dateStr);
-    await sset(`log:${kid}`, log[kid]);
-    refresh(kid);
+    if(result === 'banked') celebrate(kid, beforeLvl, beforeN);
   }
 }
 
+/* ---------- editing a past day ---------- */
+let dayEdit = null;
+
+async function openDayEditor(kid, ds){
+  const state = (ds === dateStr)
+    ? dayState[kid]
+    : await sget(`day:${kid}:${ds}`, {checked:{}});
+  dayEdit = {kid, ds, state};
+
+  document.getElementById('dayModal').className = 'modal ' + kid;
+  document.getElementById('dayTitle').textContent = (kid === 'flynn' ? 'FLYNN' : 'AVERY');
+  document.getElementById('daySub').textContent =
+    new Date(ds + 'T00:00:00').toLocaleDateString(undefined,
+      {weekday:'long', day:'numeric', month:'long', year:'numeric'})
+    + (ds === dateStr ? ' (today)' : '');
+  renderDayTasks();
+  document.getElementById('dayOv').classList.add('show');
+}
+
+function renderDayTasks(){
+  const {kid, ds, state} = dayEdit;
+  const list = tasksFor(kid, ds);
+  const ul = document.getElementById('dayTasks');
+  ul.innerHTML = '';
+  list.forEach(t=>{
+    const on = !!state.checked[t.id];
+    const li = document.createElement('li');
+    li.className = 'task' + (on ? ' done' : '');
+    li.innerHTML =
+      `<span class="ic">${t.icon}</span>`+
+      `<span class="txt">${t.label}</span>`+
+      (t.tag?`<span class="tag">${t.tag}</span>`:'')+
+      `<span class="box ${on?'on':''}"><svg viewBox="0 0 24 24" fill="none">`+
+      `<path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="4" stroke-linecap="square"/></svg></span>`;
+    li.addEventListener('click', ()=>toggleDayTask(t.id));
+    ul.appendChild(li);
+  });
+  const done = list.filter(t=>state.checked[t.id]).length;
+  document.getElementById('dayBanked').textContent =
+    (done === list.length && list.length)
+      ? '\u2605 THIS DAY COUNTS TOWARD THE PRIZE'
+      : `${done}/${list.length} DONE \u2014 TICK THEM ALL TO COUNT THE DAY`;
+}
+
+async function toggleDayTask(id){
+  const {kid, ds, state} = dayEdit;
+  const nowOn = !state.checked[id];
+  state.checked[id] = nowOn;
+  nowOn ? sfx.tick() : sfx.untick();
+
+  await sset(`day:${kid}:${ds}`, state);
+  if(ds === dateStr) dayState[kid] = state;
+
+  const beforeLvl = levelOf(kid), beforeN = cleared(kid).length;
+  const result = await rebank(kid, ds, state);
+
+  renderDayTasks();
+  if(ds === dateStr) renderTasks(kid);
+  refresh(kid);
+
+  if(result === 'banked'){
+    if(ds === dateStr) celebrate(kid, beforeLvl, beforeN);
+    else { sfx.badge(); confetti(26); }
+  }
+}
+
+async function tickAllDay(){
+  const {kid, ds, state} = dayEdit;
+  const list = tasksFor(kid, ds);
+  const allOn = list.every(t=>state.checked[t.id]);
+  list.forEach(t=>{ state.checked[t.id] = !allOn; });
+  allOn ? sfx.untick() : sfx.clear();
+
+  await sset(`day:${kid}:${ds}`, state);
+  if(ds === dateStr) dayState[kid] = state;
+  const result = await rebank(kid, ds, state);
+
+  renderDayTasks();
+  if(ds === dateStr) renderTasks(kid);
+  refresh(kid);
+  if(result === 'banked') confetti(30);
+}
+
+function renderMounts(kid){
+  const wrap = document.getElementById('mounts-'+kid);
+  if(!wrap) return;
+  const current = mountOf(kid);
+  wrap.innerHTML = '';
+  KID_MOUNTS[kid].forEach(id=>{
+    const b = document.createElement('button');
+    b.className = 'mountbtn' + (id===current ? ' on' : '');
+    b.innerHTML = `<span class="mi">${MOUNTS[id].icon}</span><span>${MOUNTS[id].label}</span>`;
+    b.addEventListener('click', async ()=>{
+      if(!settings.mount) settings.mount = {};
+      settings.mount[kid] = id;
+      await sset('settings', settings);
+      document.getElementById('hero-'+kid).innerHTML = pixelSVG(mountMap(id));
+      renderMounts(kid);
+      renderRoute(kid);
+      sfx.tick();
+    });
+    wrap.appendChild(b);
+  });
+}
+
 function refresh(kid){
-  renderStats(kid); renderRoute(kid); renderBadges(kid); renderHistory(kid);
+  renderStats(kid); renderRoute(kid); renderBadges(kid); renderHistory(kid); renderMounts(kid);
 }
 
 function celebrate(kid, beforeLvl, beforeN){
   const isF = kid==='flynn';
-  const map = isF ? MAP_FLYNN : MAP_AVERY;
-  document.getElementById('celebSprite').innerHTML = pixelSVG(map);
+  document.getElementById('celebSprite').innerHTML = pixelSVG(mountMap(mountOf(kid)));
 
   const n = cleared(kid).length;
   const newBadge = BADGES.find(b=>b.at>beforeN && b.at<=n);
@@ -1143,6 +1385,9 @@ function wireEvents(){
   document.getElementById('ov').addEventListener('click', e=>{ if(e.target.id==='ov') document.getElementById('ov').classList.remove('show'); });
   document.getElementById('celebClose').addEventListener('click', closeCeleb);
   document.getElementById('celeb').addEventListener('click', e=>{ if(e.target.id==='celeb') closeCeleb(); });
+  document.getElementById('dayClose').addEventListener('click', ()=>document.getElementById('dayOv').classList.remove('show'));
+  document.getElementById('dayAll').addEventListener('click', tickAllDay);
+  document.getElementById('dayOv').addEventListener('click', e=>{ if(e.target.id==='dayOv') document.getElementById('dayOv').classList.remove('show'); });
   wireBackup();
 }
 
@@ -1162,8 +1407,7 @@ async function init(){
   // ---- phase 1: draw everything straight away, using defaults ----
   window.__bootStage = 'phase1-drawing';
   makeStars();
-  document.getElementById('hero-flynn').innerHTML = pixelSVG(MAP_FLYNN);
-  document.getElementById('hero-avery').innerHTML = pixelSVG(MAP_AVERY);
+  KIDS.forEach(k=>{ document.getElementById('hero-'+k).innerHTML = pixelSVG(mountMap(mountOf(k))); });
   document.getElementById('port-flynn').innerHTML = cropSVG(MAP_FLYNN, 8, 19, 0, 11);
   document.getElementById('port-avery').innerHTML = cropSVG(MAP_AVERY, 15, 29, 1, 12);
   document.getElementById('dateLabel').textContent =
