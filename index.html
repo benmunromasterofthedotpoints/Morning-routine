@@ -326,6 +326,64 @@ header{display:flex; align-items:center; justify-content:space-between; gap:14px
 .btn.pri{background:var(--gold); flex:1;}
 .btn:active{transform:translate(2px,2px);}
 
+/* checked-item icon burst */
+.iconpop{
+  position:fixed; z-index:70; pointer-events:none; font-size:42px; line-height:1;
+  will-change:transform,opacity; filter:drop-shadow(0 8px 18px rgba(0,0,0,.35));
+}
+.ip-fly    { animation:ipfly    1.05s cubic-bezier(.22,.9,.3,1) forwards; }
+.ip-tumble { animation:iptumble 1.05s cubic-bezier(.22,.9,.3,1) forwards; }
+.ip-boing  { animation:ipboing  1.10s cubic-bezier(.34,1.6,.5,1)  forwards; }
+.ip-zig    { animation:ipzig    1.10s ease-out forwards; }
+
+@keyframes ipfly{
+  0%  {transform:translate(-50%,-50%) scale(.5) rotate(0deg); opacity:0;}
+  12% {transform:translate(-50%,-50%) scale(1.2) rotate(-10deg); opacity:1;}
+  50% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(6) rotate(8deg); opacity:1;}
+  75% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(5.4) rotate(-5deg); opacity:1;}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy) - 70px)) scale(7.2) rotate(0deg); opacity:0;}
+}
+@keyframes iptumble{
+  0%  {transform:translate(-50%,-50%) scale(.5) rotate(0deg); opacity:0;}
+  12% {transform:translate(-50%,-50%) scale(1.2) rotate(90deg); opacity:1;}
+  55% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(6.2) rotate(560deg); opacity:1;}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy) - 50px)) scale(7) rotate(720deg); opacity:0;}
+}
+@keyframes ipboing{
+  0%  {transform:translate(-50%,-50%) scale(.4); opacity:0;}
+  15% {transform:translate(-50%,-50%) scale(1.4); opacity:1;}
+  45% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(7) ; opacity:1;}
+  58% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(4.6); opacity:1;}
+  70% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(6.6); opacity:1;}
+  82% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(5.6); opacity:1;}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(6.4); opacity:0;}
+}
+@keyframes ipzig{
+  0%  {transform:translate(-50%,-50%) scale(.5) rotate(-20deg); opacity:0;}
+  15% {transform:translate(calc(-50% + var(--dx)*0.3),calc(-50% + var(--dy)*0.5 - 40px)) scale(2.4) rotate(18deg); opacity:1;}
+  35% {transform:translate(calc(-50% + var(--dx)*0.6),calc(-50% + var(--dy)*0.7 + 40px)) scale(4) rotate(-16deg); opacity:1;}
+  60% {transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(6.6) rotate(10deg); opacity:1;}
+  100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy) - 60px)) scale(7.4) rotate(0deg); opacity:0;}
+}
+
+.ipring{
+  position:fixed; z-index:69; pointer-events:none; width:40px; height:40px; margin:-20px 0 0 -20px;
+  border:6px solid var(--gold); border-radius:50%;
+  animation:ipring .7s ease-out .40s forwards; opacity:0;
+}
+@keyframes ipring{
+  0%  {transform:scale(.3); opacity:.95;}
+  100%{transform:scale(9);  opacity:0;}
+}
+.ipspark{
+  position:fixed; z-index:71; pointer-events:none; width:12px; height:12px; margin:-6px 0 0 -6px;
+  opacity:0; animation:ipspark .75s ease-out .45s forwards;
+}
+@keyframes ipspark{
+  0%  {transform:translate(0,0) scale(.4) rotate(0deg); opacity:1;}
+  100%{transform:translate(var(--sx),var(--sy)) scale(1.3) rotate(220deg); opacity:0;}
+}
+
 /* celebration */
 .celeb{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:60; padding:16px;}
 .celeb.show{display:flex;}
@@ -452,7 +510,7 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
     </div>
   </div>
 
-  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 5 &middot; RIDES + BACKFILL</span></footer>
+  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 6 &middot; ICON POPS</span></footer>
 </div>
 
 <div class="ov" id="ov">
@@ -671,7 +729,7 @@ const BASE = [
   {id:'drink',     icon:'💧', label:'Fill drink bottle & put in school bag', school:true},
   {id:'lunchbox',  icon:'🍱', label:'Pack lunch box in bag', school:true},
   {id:'toys',      icon:'🧸', label:'Clean up toys'},
-  {id:'rubbish',   icon:'🗑️', label:'Take out the rubbish'},
+  {id:'rubbish',   icon:'🗑️', label:'Check if rubbish needs to go in the bin'},
   {id:'carbag',    icon:'🚗', label:'Pack bag in the car', school:true}
 ];
 
@@ -826,6 +884,58 @@ const sfx = {
 };
 
 /* ---------- fx ---------- */
+const REDUCE_MOTION = (function(){
+  try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
+  catch(e){ return false; }
+})();
+
+/* the ticked job's icon flies to the middle of the screen and bursts */
+const IP_STYLES = ['fly','tumble','boing','zig'];
+const IP_SPARKS = ['✨','⭐','💫','🌟'];
+
+function iconBurst(icon, sourceEl){
+  if(REDUCE_MOTION || !icon) return;
+  let x, y;
+  try{
+    const r = sourceEl.getBoundingClientRect();
+    x = r.left + r.width/2;
+    y = r.top + r.height/2;
+  }catch(e){
+    x = window.innerWidth/2; y = window.innerHeight/2;
+  }
+  const cx = window.innerWidth/2, cy = window.innerHeight*0.42;
+  const kill = [];
+
+  const el = document.createElement('div');
+  el.className = 'iconpop ip-' + IP_STYLES[(Math.random()*IP_STYLES.length)|0];
+  el.textContent = icon;
+  el.style.left = x + 'px';
+  el.style.top  = y + 'px';
+  el.style.setProperty('--dx', (cx - x) + 'px');
+  el.style.setProperty('--dy', (cy - y) + 'px');
+  document.body.appendChild(el); kill.push(el);
+
+  const ring = document.createElement('div');
+  ring.className = 'ipring';
+  ring.style.left = cx + 'px'; ring.style.top = cy + 'px';
+  document.body.appendChild(ring); kill.push(ring);
+
+  for(let i=0;i<10;i++){
+    const s = document.createElement('div');
+    s.className = 'ipspark';
+    s.textContent = IP_SPARKS[i % IP_SPARKS.length];
+    const ang = (i/10)*Math.PI*2 + Math.random()*0.4;
+    const dist = 110 + Math.random()*90;
+    s.style.left = cx + 'px'; s.style.top = cy + 'px';
+    s.style.setProperty('--sx', Math.cos(ang)*dist + 'px');
+    s.style.setProperty('--sy', Math.sin(ang)*dist + 'px');
+    s.style.animationDelay = (0.42 + Math.random()*0.12) + 's';
+    document.body.appendChild(s); kill.push(s);
+  }
+
+  setTimeout(()=>kill.forEach(n=>{ if(n.parentNode) n.remove(); }), 1500);
+}
+
 function confetti(n){
   const cols=['#2F80ED','#F17FB1','#FFC94D','#3FC97F','#8B6BFF','#FF7A5C'];
   for(let i=0;i<(n||54);i++){
@@ -919,6 +1029,9 @@ function renderTasks(kid){
       inp.checked = !inp.checked;
       li.classList.toggle('done', inp.checked);
       box.classList.toggle('on', inp.checked);
+      if(inp.checked && !completesDay(kid, t.id)){
+        iconBurst(t.icon, li.querySelector('.ic'));
+      }
       onToggle(kid, t.id, inp.checked);
     }
     li.addEventListener('click', toggle);
@@ -1065,6 +1178,14 @@ function renderQuest(){
 
 /* ---------- interactions ---------- */
 /* Decides whether a given date counts as a cleared day, for today or any past day. */
+/* true when ticking this job would clear the whole day — the full celebration handles that */
+function completesDay(kid, id, ds){
+  const d = ds || dateStr;
+  const state = (d === dateStr) ? dayState[kid] : (dayEdit && dayEdit.ds === d ? dayEdit.state : null);
+  if(!state) return false;
+  return tasksFor(kid, d).every(t => t.id === id || state.checked[t.id]);
+}
+
 async function rebank(kid, ds, state){
   const list = tasksFor(kid, ds);
   const all = list.length > 0 && list.every(t => state.checked[t.id]);
@@ -1124,6 +1245,7 @@ function renderDayTasks(){
     const on = !!state.checked[t.id];
     const li = document.createElement('li');
     li.className = 'task' + (on ? ' done' : '');
+    li.dataset.tid = t.id;
     li.innerHTML =
       `<span class="ic">${t.icon}</span>`+
       `<span class="txt">${t.label}</span>`+
@@ -1143,8 +1265,15 @@ function renderDayTasks(){
 async function toggleDayTask(id){
   const {kid, ds, state} = dayEdit;
   const nowOn = !state.checked[id];
+  const finishes = nowOn && completesDay(kid, id, ds);
   state.checked[id] = nowOn;
   nowOn ? sfx.tick() : sfx.untick();
+  if(nowOn && !finishes){
+    const row = [...document.querySelectorAll('#dayTasks .task')]
+      .find(el => el.querySelector('.txt') && el.dataset.tid === id);
+    iconBurst(tasksFor(kid, ds).find(t=>t.id===id).icon,
+              row ? row.querySelector('.ic') : document.getElementById('dayTasks'));
+  }
 
   await sset(`day:${kid}:${ds}`, state);
   if(ds === dateStr) dayState[kid] = state;
