@@ -421,6 +421,7 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
   </script>
   <div class="warnbar pix" id="bootfail" hidden></div>
   <div class="warnbar pix" id="warnbar" hidden></div>
+  <div class="warnbar pix" id="nudgebar" hidden></div>
   <header>
     <div class="logo">
       <div class="sub pix">MORNING MISSION</div>
@@ -510,7 +511,7 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
     </div>
   </div>
 
-  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 6 &middot; ICON POPS</span></footer>
+  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 8 &middot; <span id="whereami">CHECKING…</span></span></footer>
 </div>
 
 <div class="ov" id="ov">
@@ -726,6 +727,7 @@ const BASE = [
   {id:'hygiene',   icon:'🪥', label:'Brush teeth & wash face'},
   {id:'hair',      icon:'💇', label:'Brush hair'},
   {id:'breakfast', icon:'🥣', label:'Eat breakfast & clean up after'},
+  {id:'practice',  icon:'🎵', label:'Piano practice'},
   {id:'drink',     icon:'💧', label:'Fill drink bottle & put in school bag', school:true},
   {id:'lunchbox',  icon:'🍱', label:'Pack lunch box in bag', school:true},
   {id:'toys',      icon:'🧸', label:'Clean up toys'},
@@ -884,6 +886,28 @@ const sfx = {
 };
 
 /* ---------- fx ---------- */
+/* ---------- where is this copy running? ----------
+   iOS gives a home-screen app its OWN storage, separate from Safari's.
+   Same web address, two different sets of saved data — the usual reason
+   progress looks like it has vanished. */
+const IS_INSTALLED = (function(){
+  try{
+    if(window.navigator.standalone === true) return true;
+    if(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return true;
+  }catch(e){}
+  return false;
+})();
+const IS_IOS_BROWSER_TAB = (window.navigator.standalone === false);
+
+/* ask the browser not to evict our data when space runs low */
+(async function requestPersistence(){
+  try{
+    if(navigator.storage && navigator.storage.persist){
+      await navigator.storage.persist();
+    }
+  }catch(e){}
+})();
+
 const REDUCE_MOTION = (function(){
   try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
   catch(e){ return false; }
@@ -1429,6 +1453,26 @@ function makeStars(){
   }
 }
 
+/* nudge for a backup once there is history worth losing */
+async function backupNudge(){
+  const totals = KIDS.reduce((n,k)=>n+log[k].length, 0);
+  if(totals < 3) return;
+  const last = await sget('lastBackup', null);
+  const stale = !last || (new Date(dateStr) - new Date(last)) / 86400000 > 14;
+  if(!stale) return;
+  const bar = document.getElementById('nudgebar');
+  if(!bar) return;
+  bar.innerHTML = (last ? 'YOUR LAST BACKUP WAS ' + last + '. ' : 'YOU HAVE NEVER TAKEN A BACKUP. ')
+    + totals + ' DAYS OF PROGRESS ARE STORED ONLY ON THIS DEVICE. '
+    + '<button class="btn sm" id="nudgeBtn" style="margin-top:10px">TAKE A BACKUP NOW</button>';
+  bar.hidden = false;
+  const btn = document.getElementById('nudgeBtn');
+  if(btn) btn.addEventListener('click', ()=>{
+    buildModal();
+    document.getElementById('ov').classList.add('show');
+  });
+}
+
 /* ---------- backup / transfer between devices ---------- */
 function buildBackup(){
   return JSON.stringify({
@@ -1481,6 +1525,8 @@ function wireBackup(){
     box.value = buildBackup();
     try{
       await navigator.clipboard.writeText(box.value);
+      await sset('lastBackup', dateStr);
+      document.getElementById('nudgebar').hidden = true;
       bkMsg('Copied. Paste it into the app on the other device.');
     }catch(e){
       box.focus(); box.select();
@@ -1495,6 +1541,8 @@ function wireBackup(){
       a.href = url; a.download = `rise-and-shine-backup-${dateStr}.json`;
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(()=>URL.revokeObjectURL(url), 2000);
+      sset('lastBackup', dateStr);
+      document.getElementById('nudgebar').hidden = true;
       bkMsg('Saved to your downloads.');
     }catch(e){ bkMsg('Could not save a file here — use COPY instead.'); }
   });
@@ -1569,7 +1617,19 @@ async function init(){
 
   if(Store.mode() === 'memory'){
     warn('THIS DEVICE ISN\u2019T ALLOWING SAVING \u2014 PROGRESS WILL RESET WHEN THE APP CLOSES. TRY OPENING IT IN SAFARI, NOT PRIVATE BROWSING.');
+  } else if(IS_IOS_BROWSER_TAB){
+    warn('YOU ARE IN SAFARI, NOT THE HOME SCREEN APP. THESE ARE TWO SEPARATE COPIES WITH SEPARATE PROGRESS. OPEN RISE & SHINE FROM THE HOME SCREEN ICON TO SEE THEIR REAL STARS.');
   }
+
+  // where-am-I stamp, so it is always obvious which copy is on screen
+  const whereEl = document.getElementById('whereami');
+  if(whereEl){
+    const totals = KIDS.reduce((n,k)=>n+log[k].length, 0);
+    whereEl.textContent = (IS_INSTALLED ? 'HOME SCREEN APP' : 'BROWSER TAB')
+      + ' \u00B7 ' + Store.mode().toUpperCase() + ' SAVE \u00B7 ' + totals + ' DAYS STORED HERE';
+  }
+
+  await backupNudge();
 
   paintAll();
   window.__bootStage = 'complete';
