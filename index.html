@@ -511,7 +511,7 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
     </div>
   </div>
 
-  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 8 &middot; <span id="whereami">CHECKING…</span></span></footer>
+  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 9 &middot; <span id="whereami">CHECKING…</span></span></footer>
 </div>
 
 <div class="ov" id="ov">
@@ -757,10 +757,12 @@ const BADGES = [
   {at:20, icon:'💎'}, {at:25, icon:'👑'}, {at:30, icon:'🏆'}
 ];
 
-const now = new Date();
-const dateStr = now.toLocaleDateString('en-CA');
-const wd = now.getDay();
-const monthKey = dateStr.slice(0,7);
+/* The date must NOT be frozen at load: an iPad home-screen app is suspended
+   and resumed rather than reloaded, so it can stay open across midnight.
+   These are re-evaluated by checkRollover() below. */
+let now = new Date();
+let dateStr = now.toLocaleDateString('en-CA');
+let monthKey = dateStr.slice(0,7);
 
 const DEFAULTS = {
   piano:{flynn:[1], avery:[3]},
@@ -1549,7 +1551,54 @@ function wireBackup(){
   document.getElementById('restoreBk').addEventListener('click', restoreBackup);
 }
 
+/* ---------- midnight rollover ----------
+   Re-checks the real date whenever the app is resumed, focused, or every
+   half-minute, and rebuilds the day if it has moved on. */
+let rolloverBusy = false;
+
+async function checkRollover(){
+  if(rolloverBusy) return;
+  const real = new Date();
+  const realStr = real.toLocaleDateString('en-CA');
+  if(realStr === dateStr) return;
+
+  rolloverBusy = true;
+  try{
+    now = real;
+    dateStr = realStr;
+    monthKey = realStr.slice(0,7);
+
+    // a new day means a fresh checklist, and the calendar jumps to this month
+    for(const kid of KIDS){
+      dayState[kid] = await sget(`day:${kid}:${dateStr}`, {checked:{}});
+      calView[kid] = {y: now.getFullYear(), m: now.getMonth()};
+    }
+
+    // an editor left open from yesterday would be showing stale jobs
+    const dayOv = document.getElementById('dayOv');
+    if(dayOv && dayOv.classList.contains('show')){
+      dayOv.classList.remove('show');
+      dayEdit = null;
+    }
+
+    document.getElementById('dateLabel').textContent =
+      now.toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
+
+    paintAll();
+  } finally {
+    rolloverBusy = false;
+  }
+}
+
+function wireRollover(){
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) checkRollover(); });
+  window.addEventListener('focus', checkRollover);
+  window.addEventListener('pageshow', checkRollover);
+  setInterval(checkRollover, 30000);
+}
+
 function wireEvents(){
+  wireRollover();
   window.addEventListener('resize', ()=>KIDS.forEach(renderRoute));
   document.querySelectorAll('.calnav').forEach(b=>{
     b.addEventListener('click', ()=>stepMonth(b.dataset.kid, parseInt(b.dataset.dir,10)));
