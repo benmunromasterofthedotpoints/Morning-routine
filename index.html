@@ -188,8 +188,40 @@ header{display:flex; align-items:center; justify-content:space-between; gap:14px
 .route{
   position:relative; height:92px; border:4px solid var(--panel-line); overflow:hidden;
 }
-.route.flynn-r{background:linear-gradient(180deg,#BFE3FF 0%,#BFE3FF 42%,var(--grass) 42%,var(--grass) 62%,var(--dirt) 62%,var(--dirt) 88%,var(--dirt-dk) 88%);}
-.route.avery-r{background:linear-gradient(180deg,#DCF3FF 0%,#DCF3FF 46%,var(--ice) 46%,var(--ice) 84%,var(--ice-dk) 84%);}
+/* unlockable environments — one per completed week */
+.route.env-meadow {background:linear-gradient(180deg,#BFE3FF 0%,#BFE3FF 44%,#5FBF7F 44%,#5FBF7F 66%,#C8A46A 66%,#C8A46A 89%,#A8834C 89%);}
+.route.env-beach  {background:linear-gradient(180deg,#FFE7B4 0%,#FFD98E 30%,#7FD0F0 46%,#7FD0F0 66%,#F3DFAC 66%,#E2C68C 89%);}
+.route.env-snow   {background:linear-gradient(180deg,#CFE9FA 0%,#E4F4FF 44%,#FFFFFF 44%,#FFFFFF 74%,#D2E8F5 74%);}
+.route.env-desert {background:linear-gradient(180deg,#FFD79A 0%,#FFC46B 42%,#E8A857 42%,#E8A857 72%,#C98B3F 72%);}
+.route.env-forest {background:linear-gradient(180deg,#1F4A38 0%,#337A55 38%,#2C6144 38%,#2C6144 70%,#1E4331 70%);}
+.route.env-ember  {background:linear-gradient(180deg,#3E1826 0%,#8E3B2E 34%,#C25A2A 34%,#C25A2A 68%,#65261A 68%);}
+.route.env-star   {background:linear-gradient(180deg,#10163A 0%,#262B63 42%,#37306B 42%,#37306B 74%,#1D1946 74%);}
+.route.env-rainbow{background:linear-gradient(180deg,#FFD9F0 0%,#DCE6FF 26%,#D6FBE8 50%,#FFF6C9 74%,#FFD2C9 100%);}
+
+/* days of the week along the route */
+.daymark{
+  position:absolute; top:0; bottom:0; width:14.28%; pointer-events:none;
+  display:flex; flex-direction:column; align-items:center; padding-top:5px;
+}
+.daymark .dl{font-family:'Press Start 2P',monospace; font-size:7px; color:rgba(27,30,61,.55);}
+.daymark .ds{font-size:12px; line-height:1; margin-top:3px; opacity:.18;}
+.daymark.on .ds{opacity:1;}
+.daymark.now .dl{color:var(--gold-dk); text-shadow:0 0 3px rgba(255,255,255,.9);}
+.route.dark .daymark .dl{color:rgba(255,255,255,.8);}
+.route.dark .daymark.now .dl{color:var(--gold);}
+
+/* tier / prize readouts */
+.tierline{
+  display:flex; align-items:center; gap:8px; margin-top:9px;
+  border:3px solid var(--panel-line); background:#F2F4FB; padding:8px 10px;
+}
+.tierline .te{font-size:16px;}
+.tierline .tn{font-family:'Press Start 2P',monospace; font-size:8px; flex:1; line-height:1.5;}
+.tierline .tx{font-family:'Press Start 2P',monospace; font-size:7px; color:var(--ink-soft);}
+.prizeline{
+  margin-top:7px; border:3px solid var(--panel-line); background:#FFF6DE;
+  padding:7px 10px; font-family:'Press Start 2P',monospace; font-size:7.5px; line-height:1.6;
+}
 .routefill{position:absolute; left:0; top:0; bottom:0; width:0%; transition:width .8s cubic-bezier(.34,1.4,.64,1); mix-blend-mode:multiply; opacity:.35;}
 .flynn-r .routefill{background:linear-gradient(90deg,#7FD3A0,#BFE9CF);}
 .avery-r .routefill{background:linear-gradient(90deg,#8FD9F5,#D6F2FF);}
@@ -465,11 +497,13 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
       <div class="allclear pix" id="clr-flynn">★ ALL JOBS CLEARED ★</div>
       <div class="routewrap">
         <div class="routehead"><span class="rn pix">FLYNN'S DINO TRAIL</span><span class="rf pix" id="frac-flynn">0/20</span></div>
-        <div class="route flynn-r" id="route-flynn">
+        <div class="route env-meadow" id="route-flynn">
           <div class="routefill" id="fill-flynn"></div>
           <div class="goalflag">🏆</div>
           <div class="hero idle" id="hero-flynn"></div>
         </div>
+        <div class="tierline" id="tier-flynn"></div>
+        <div class="prizeline" id="prize-flynn"></div>
       </div>
       <div class="mounts" id="mounts-flynn"></div>
       <div class="badges" id="badges-flynn"></div>
@@ -500,18 +534,20 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
       <div class="allclear pix" id="clr-avery">★ ALL JOBS CLEARED ★</div>
       <div class="routewrap">
         <div class="routehead"><span class="rn pix">AVERY'S ICE RINK</span><span class="rf pix" id="frac-avery">0/20</span></div>
-        <div class="route avery-r" id="route-avery">
+        <div class="route env-meadow" id="route-avery">
           <div class="routefill" id="fill-avery"></div>
           <div class="goalflag">🏆</div>
           <div class="hero idle" id="hero-avery"></div>
         </div>
+        <div class="tierline" id="tier-avery"></div>
+        <div class="prizeline" id="prize-avery"></div>
       </div>
       <div class="mounts" id="mounts-avery"></div>
       <div class="badges" id="badges-avery"></div>
     </div>
   </div>
 
-  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 9 &middot; <span id="whereami">CHECKING…</span></span></footer>
+  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 10 &middot; <span id="whereami">CHECKING…</span></span></footer>
 </div>
 
 <div class="ov" id="ov">
@@ -522,6 +558,7 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
     <div class="fg"><h3 class="pix">AVERY — PIANO LESSON DAYS</h3><div class="chips" data-piano="avery"></div></div>
     <div class="fg"><h3 class="pix">AVERY — LIBRARY DAY</h3><select id="lib-avery"></select></div>
     <div class="fg"><h3 class="pix">CHALLENGE START DATE</h3><input type="date" id="startDate"><div class="hintline">Days cleared on or after this date count toward the prize.</div></div>
+    <div class="fg"><h3 class="pix">DAYS NEEDED EACH WEEK TO UNLOCK A WORLD</h3><input type="number" id="weekGoal" min="1" max="7"><div class="hintline">7 means every day. Lower it if a full week is too tough.</div></div>
     <div class="fg"><h3 class="pix">DAYS NEEDED FOR PRIZE</h3><input type="number" id="goalDays" min="1" max="31"></div>
     <div class="fg"><h3 class="pix">THE PRIZE IS…</h3><input type="text" id="prizeText" maxlength="80"></div>
 
@@ -696,7 +733,8 @@ const PAL = {
 };
 
 /* run-length pixel renderer */
-function pixelSVG(map){
+function pixelSVG(map, override){
+  const pal = override ? Object.assign({}, PAL, override) : PAL;
   const w = map[0].length, h = map.length;
   let out = '';
   for(let y=0;y<h;y++){
@@ -706,7 +744,7 @@ function pixelSVG(map){
       if(ch==='.'){ x++; continue; }
       let x2=x;
       while(x2+1<w && map[y][x2+1]===ch) x2++;
-      out += `<rect x="${x}" y="${y}" width="${x2-x+1}" height="1" fill="${PAL[ch]}"/>`;
+      out += `<rect x="${x}" y="${y}" width="${x2-x+1}" height="1" fill="${pal[ch]}"/>`;
       x = x2+1;
     }
   }
@@ -768,6 +806,7 @@ const DEFAULTS = {
   piano:{flynn:[1], avery:[3]},
   library:{flynn:2, avery:4},
   goalDays:20,
+  weekGoal:7,
   prizeText:'A special treat of their choice!',
   challengeStart: dateStr,
   mount:{flynn:'dino', avery:'rabbit'}
@@ -1090,36 +1129,62 @@ function renderStats(kid){
 }
 
 function renderRoute(kid){
-  const goal = settings.goalDays||20;
-  const n = cleared(kid).length;
+  const goal = weekGoalOf();
+  const weekStart = mondayOf(dateStr);
+  const days = weekDates(weekStart);
+  const set = new Set(log[kid]);
+  const doneDays = days.filter(d => set.has(d));
+  const n = doneDays.length;
   const pct = Math.max(0, Math.min(1, n/goal));
-  document.getElementById('frac-'+kid).textContent = n+'/'+goal;
-  document.getElementById('fill-'+kid).style.width = (pct*100)+'%';
+
+  document.getElementById('frac-'+kid).textContent = n + '/' + goal + ' THIS WEEK';
+  document.getElementById('fill-'+kid).style.width = (pct*100) + '%';
 
   const route = document.getElementById('route-'+kid);
-  const hero = document.getElementById('hero-'+kid);
+  const hero  = document.getElementById('hero-'+kid);
+  const tier  = tierOf(kid);
+  const T     = TIERS[tier];
 
-  route.querySelectorAll('.mile').forEach(m=>m.remove());
-  BADGES.filter(b=>b.at<goal).forEach(b=>{
+  route.className = 'route env-' + T.env + (T.dark ? ' dark' : '');
+
+  // one marker per day of the week
+  route.querySelectorAll('.daymark').forEach(m=>m.remove());
+  const LETTERS = ['M','T','W','T','F','S','S'];
+  days.forEach((ds,i)=>{
     const m = document.createElement('div');
-    m.className='mile';
-    m.style.left = ((b.at/goal)*100)+'%';
-    m.innerHTML = `<span>${b.at}</span>`;
+    m.className = 'daymark' + (set.has(ds) ? ' on' : '') + (ds === dateStr ? ' now' : '');
+    m.style.left = (i * 14.28) + '%';
+    m.innerHTML = `<span class="dl">${LETTERS[i]}</span><span class="ds">⭐</span>`;
     route.appendChild(m);
   });
 
   const usable = Math.max(0, route.clientWidth - hero.clientWidth - 42);
-  hero.style.left = (pct*usable)+'px';
+  hero.style.left = (pct*usable) + 'px';
+  hero.innerHTML = pixelSVG(mountMap(mountOf(kid)), tierPalette(kid, tier));
+
+  // tier + prize readouts
+  const nextAt = weeksCompleted(kid) + 1;
+  document.getElementById('tier-'+kid).innerHTML =
+    `<span class="te">${T.badge}</span>`+
+    `<span class="tn">WORLD ${tier+1}/8 — ${T.name}<br><span class="tx">${T.gear}</span></span>`+
+    `<span class="tx">${tier >= MAX_TIER ? 'MAX' : 'NEXT: WK ' + nextAt}</span>`;
+
+  const pGoal = settings.goalDays || 20;
+  const pDone = cleared(kid).length;
+  document.getElementById('prize-'+kid).textContent =
+    `🏆 PRIZE PROGRESS ${pDone}/${pGoal} DAYS`;
 }
 
 function renderBadges(kid){
-  const n = cleared(kid).length;
+  const weeks = weeksCompleted(kid);
   const wrap = document.getElementById('badges-'+kid);
   wrap.innerHTML='';
-  BADGES.forEach(b=>{
+  TIERS.slice(1).forEach((t,i)=>{
+    const need = i+1;
     const d = document.createElement('div');
-    d.className = 'badge'+(n>=b.at?' earned':'');
-    d.innerHTML = b.icon+`<small>${b.at}</small>`;
+    d.className = 'badge' + (weeks >= need ? ' earned' : '');
+    d.title = t.name + ' — ' + need + ' full week' + (need===1?'':'s');
+    d.innerHTML = t.badge + `<small>W${need}</small>`;
     wrap.appendChild(d);
   });
 }
@@ -1197,6 +1262,70 @@ function stepMonth(kid, dir){
   renderHistory(kid);
 }
 
+/* ---------- weekly worlds ----------
+   One completed week = one new environment plus an outfit and creature upgrade. */
+const TIERS = [
+  {name:'MEADOW',       env:'meadow',  badge:'🌱', gear:'Everyday clothes'},
+  {name:'SANDY SHORES', env:'beach',   badge:'🏖️', gear:'Sunset outfit + coral creature',
+   outfit:{main:'#F2A65A',dark:'#C77B2B'}, creature:{main:'#7FD4C0',dark:'#4FA894',light:'#DFF7F0'}},
+  {name:'FROSTY PEAKS', env:'snow',    badge:'❄️', gear:'Ice outfit + frost creature', dark:false,
+   outfit:{main:'#8FC9EC',dark:'#4E86B4'}, creature:{main:'#DDEFFA',dark:'#93B9D0',light:'#FFFFFF'}},
+  {name:'GOLDEN DUNES', env:'desert',  badge:'🏜️', gear:'Golden outfit + sand creature',
+   outfit:{main:'#FFC94D',dark:'#C08D14'}, creature:{main:'#E8C069',dark:'#AC8434',light:'#FFF0C4'}},
+  {name:'DEEP WOODS',   env:'forest',  badge:'🌲', gear:'Ranger outfit + mossy creature', dark:true,
+   outfit:{main:'#5FD08C',dark:'#2C7D50'}, creature:{main:'#7FB768',dark:'#456B39',light:'#E2F3D4'}},
+  {name:'EMBER VALLEY', env:'ember',   badge:'🔥', gear:'Ember outfit + lava creature', dark:true,
+   outfit:{main:'#FF7A52',dark:'#B03118'}, creature:{main:'#E2794A',dark:'#9E4020',light:'#FFD9C2'}},
+  {name:'STARLIGHT',    env:'star',    badge:'🌟', gear:'Cosmic outfit + starlit creature', dark:true,
+   outfit:{main:'#A98BFF',dark:'#5B3FC4'}, creature:{main:'#8E7BD6',dark:'#4E3E8F',light:'#E9E2FF'}},
+  {name:'RAINBOW ROAD', env:'rainbow', badge:'🌈', gear:'Legendary outfit + golden creature',
+   outfit:{main:'#FF7AC8',dark:'#C43C93'}, creature:{main:'#FFD24D',dark:'#D2951A',light:'#FFF6D4'}}
+];
+const MAX_TIER = TIERS.length - 1;
+
+/* recolours the sprite without needing new artwork */
+function tierPalette(kid, tier){
+  const t = TIERS[Math.max(0, Math.min(tier, MAX_TIER))];
+  const o = {};
+  if(t.outfit){
+    if(kid === 'flynn'){ o.b = t.outfit.main; o.n = t.outfit.dark; }
+    else               { o.p = t.outfit.main; o.q = t.outfit.dark; }
+  }
+  if(t.creature){
+    if(kid === 'flynn'){
+      o.g = t.creature.main; o.d = t.creature.dark; o.l = t.creature.light;
+      o.z = t.creature.dark; o.a = t.creature.main;
+    } else {
+      o.u = t.creature.main; o.j = t.creature.dark; o.f = t.creature.light;
+      o.i = t.creature.main;
+    }
+  }
+  return o;
+}
+
+/* ---------- week maths (weeks run Monday to Sunday) ---------- */
+function mondayOf(ds){
+  const d = new Date(ds + 'T00:00:00');
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.toLocaleDateString('en-CA');
+}
+function weekDates(weekStart){
+  const out = [], d = new Date(weekStart + 'T00:00:00');
+  for(let i = 0; i < 7; i++){ out.push(d.toLocaleDateString('en-CA')); d.setDate(d.getDate() + 1); }
+  return out;
+}
+function weekGoalOf(){ return Math.max(1, Math.min(7, settings.weekGoal || 7)); }
+function clearedThisWeek(kid){
+  const set = new Set(log[kid]);
+  return weekDates(mondayOf(dateStr)).filter(d => set.has(d));
+}
+function weeksCompleted(kid){
+  const goal = weekGoalOf(), tally = {};
+  log[kid].forEach(d => { const w = mondayOf(d); tally[w] = (tally[w] || 0) + 1; });
+  return Object.keys(tally).filter(w => tally[w] >= goal).length;
+}
+function tierOf(kid){ return Math.min(weeksCompleted(kid), MAX_TIER); }
+
 function renderQuest(){
   document.getElementById('goalLabel').textContent = 'QUEST: '+settings.goalDays+' PERFECT MORNINGS';
   document.getElementById('prizeLabel').textContent = 'Prize: '+settings.prizeText;
@@ -1236,10 +1365,11 @@ async function onToggle(kid, id, on){
   on ? sfx.tick() : sfx.untick();
 
   const beforeLvl = levelOf(kid), beforeN = cleared(kid).length;
+  const beforeWeeks = weeksCompleted(kid);
   const result = await rebank(kid, dateStr, dayState[kid]);
   if(result){
     refresh(kid);
-    if(result === 'banked') celebrate(kid, beforeLvl, beforeN);
+    if(result === 'banked') celebrate(kid, beforeLvl, beforeN, beforeWeeks);
   }
 }
 
@@ -1305,6 +1435,7 @@ async function toggleDayTask(id){
   if(ds === dateStr) dayState[kid] = state;
 
   const beforeLvl = levelOf(kid), beforeN = cleared(kid).length;
+  const beforeWeeks = weeksCompleted(kid);
   const result = await rebank(kid, ds, state);
 
   renderDayTasks();
@@ -1312,8 +1443,9 @@ async function toggleDayTask(id){
   refresh(kid);
 
   if(result === 'banked'){
-    if(ds === dateStr) celebrate(kid, beforeLvl, beforeN);
-    else { sfx.badge(); confetti(26); }
+    if(ds === dateStr || weeksCompleted(kid) > beforeWeeks){
+      celebrate(kid, beforeLvl, beforeN, beforeWeeks);
+    } else { sfx.badge(); confetti(26); }
   }
 }
 
@@ -1347,7 +1479,6 @@ function renderMounts(kid){
       if(!settings.mount) settings.mount = {};
       settings.mount[kid] = id;
       await sset('settings', settings);
-      document.getElementById('hero-'+kid).innerHTML = pixelSVG(mountMap(id));
       renderMounts(kid);
       renderRoute(kid);
       sfx.tick();
@@ -1360,26 +1491,39 @@ function refresh(kid){
   renderStats(kid); renderRoute(kid); renderBadges(kid); renderHistory(kid); renderMounts(kid);
 }
 
-function celebrate(kid, beforeLvl, beforeN){
+function celebrate(kid, beforeLvl, beforeN, beforeWeeks){
   const isF = kid==='flynn';
-  document.getElementById('celebSprite').innerHTML = pixelSVG(mountMap(mountOf(kid)));
+  document.getElementById('celebSprite').innerHTML = pixelSVG(mountMap(mountOf(kid)), tierPalette(kid, tierOf(kid)));
 
   const n = cleared(kid).length;
   const newBadge = BADGES.find(b=>b.at>beforeN && b.at<=n);
   const leveled = levelOf(kid) > beforeLvl;
 
+  const weeksNow = weeksCompleted(kid);
+  const newWorld = (typeof beforeWeeks === 'number') && weeksNow > beforeWeeks;
+
   let title = isF ? 'FLYNN CLEARED IT!' : 'AVERY CLEARED IT!';
   let text  = 'Every morning job done. Day banked!';
-  if(newBadge){ title = 'BADGE EARNED! '+newBadge.icon; text = `${n} perfect mornings — that's a new badge!`; }
-  else if(leveled){ title = 'LEVEL UP! LV '+levelOf(kid); text = 'Every morning job done. Day banked!'; }
+
+  if(newWorld){
+    const T = TIERS[Math.min(weeksNow, MAX_TIER)];
+    title = 'WEEK COMPLETE! ' + T.badge;
+    text  = `A whole week of perfect mornings! New world unlocked: ${T.name}. ${T.gear}.`;
+  } else if(newBadge){
+    title = 'BADGE EARNED! '+newBadge.icon;
+    text  = `${n} perfect mornings — that's a new badge!`;
+  } else if(leveled){
+    title = 'LEVEL UP! LV '+levelOf(kid);
+  }
 
   document.getElementById('celebTitle').textContent = title;
   document.getElementById('celebText').textContent  = text;
   document.getElementById('celebXp').textContent    = '+100 XP';
 
   document.getElementById('celeb').classList.add('show');
-  flash(); confetti(newBadge?80:54);
+  flash(); confetti(newWorld ? 120 : (newBadge ? 80 : 54));
   sfx.clear();
+  if(newWorld){ setTimeout(()=>sfx.level(), 800); setTimeout(()=>sfx.badge(), 1250); }
   if(leveled) setTimeout(()=>sfx.level(), 900);
   if(newBadge) setTimeout(()=>sfx.badge(), 1150);
 
@@ -1420,6 +1564,7 @@ function buildModal(){
     }
   });
   document.getElementById('goalDays').value = settings.goalDays;
+  document.getElementById('weekGoal').value = weekGoalOf();
   document.getElementById('prizeText').value = settings.prizeText;
   document.getElementById('startDate').value = settings.challengeStart || dateStr;
   const box = document.getElementById('backupBox');
@@ -1433,6 +1578,7 @@ async function save(){
     settings.library[kid] = parseInt(document.getElementById('lib-'+kid).value,10);
   });
   settings.goalDays = Math.max(1, Math.min(31, parseInt(document.getElementById('goalDays').value,10)||20));
+  settings.weekGoal = Math.max(1, Math.min(7, parseInt(document.getElementById('weekGoal').value,10)||7));
   settings.prizeText = document.getElementById('prizeText').value.trim() || DEFAULTS.prizeText;
   const sd = document.getElementById('startDate').value;
   if(/^\d{4}-\d{2}-\d{2}$/.test(sd)) settings.challengeStart = sd;
@@ -1633,7 +1779,6 @@ async function init(){
   // ---- phase 1: draw everything straight away, using defaults ----
   window.__bootStage = 'phase1-drawing';
   makeStars();
-  KIDS.forEach(k=>{ document.getElementById('hero-'+k).innerHTML = pixelSVG(mountMap(mountOf(k))); });
   document.getElementById('port-flynn').innerHTML = cropSVG(MAP_FLYNN, 8, 19, 0, 11);
   document.getElementById('port-avery').innerHTML = cropSVG(MAP_AVERY, 15, 29, 1, 12);
   document.getElementById('dateLabel').textContent =
