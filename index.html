@@ -547,7 +547,7 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
     </div>
   </div>
 
-  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 10 &middot; <span id="whereami">CHECKING…</span></span></footer>
+  <footer class="pix">TAP A JOB TO CLEAR IT<br>CLEAR THEM ALL TO BANK THE DAY<br><span style="opacity:.6">VERSION 11 &middot; <span id="whereami">CHECKING…</span></span></footer>
 </div>
 
 <div class="ov" id="ov">
@@ -558,7 +558,7 @@ footer{text-align:center; margin-top:26px; font-size:8px; color:#9AA3D8; line-he
     <div class="fg"><h3 class="pix">AVERY — PIANO LESSON DAYS</h3><div class="chips" data-piano="avery"></div></div>
     <div class="fg"><h3 class="pix">AVERY — LIBRARY DAY</h3><select id="lib-avery"></select></div>
     <div class="fg"><h3 class="pix">CHALLENGE START DATE</h3><input type="date" id="startDate"><div class="hintline">Days cleared on or after this date count toward the prize.</div></div>
-    <div class="fg"><h3 class="pix">DAYS NEEDED EACH WEEK TO UNLOCK A WORLD</h3><input type="number" id="weekGoal" min="1" max="7"><div class="hintline">7 means every day. Lower it if a full week is too tough.</div></div>
+    <div class="fg"><h3 class="pix">DAYS IN A ROW TO UNLOCK A WORLD</h3><input type="number" id="weekGoal" min="1" max="14"><div class="hintline">Worlds are kept forever once earned — a missed day never takes one back.</div></div>
     <div class="fg"><h3 class="pix">DAYS NEEDED FOR PRIZE</h3><input type="number" id="goalDays" min="1" max="31"></div>
     <div class="fg"><h3 class="pix">THE PRIZE IS…</h3><input type="text" id="prizeText" maxlength="80"></div>
 
@@ -1129,15 +1129,12 @@ function renderStats(kid){
 }
 
 function renderRoute(kid){
-  const goal = weekGoalOf();
-  const weekStart = mondayOf(dateStr);
-  const days = weekDates(weekStart);
-  const set = new Set(log[kid]);
-  const doneDays = days.filter(d => set.has(d));
-  const n = doneDays.length;
+  const sp = streakProgress(kid);
+  const goal = sp.goal;
+  const n = sp.into;
   const pct = Math.max(0, Math.min(1, n/goal));
 
-  document.getElementById('frac-'+kid).textContent = n + '/' + goal + ' THIS WEEK';
+  document.getElementById('frac-'+kid).textContent = n + '/' + goal + ' IN A ROW';
   document.getElementById('fill-'+kid).style.width = (pct*100) + '%';
 
   const route = document.getElementById('route-'+kid);
@@ -1147,27 +1144,26 @@ function renderRoute(kid){
 
   route.className = 'route env-' + T.env + (T.dark ? ' dark' : '');
 
-  // one marker per day of the week
+  // one marker per day of the current run
   route.querySelectorAll('.daymark').forEach(m=>m.remove());
-  const LETTERS = ['M','T','W','T','F','S','S'];
-  days.forEach((ds,i)=>{
+  for(let i = 0; i < goal; i++){
     const m = document.createElement('div');
-    m.className = 'daymark' + (set.has(ds) ? ' on' : '') + (ds === dateStr ? ' now' : '');
-    m.style.left = (i * 14.28) + '%';
-    m.innerHTML = `<span class="dl">${LETTERS[i]}</span><span class="ds">⭐</span>`;
+    m.className = 'daymark' + (i < n ? ' on' : '') + (i === n ? ' now' : '');
+    m.style.left = (i * (100/goal)) + '%';
+    m.style.width = (100/goal) + '%';
+    m.innerHTML = `<span class="dl">${i+1}</span><span class="ds">⭐</span>`;
     route.appendChild(m);
-  });
+  }
 
   const usable = Math.max(0, route.clientWidth - hero.clientWidth - 42);
   hero.style.left = (pct*usable) + 'px';
   hero.innerHTML = pixelSVG(mountMap(mountOf(kid)), tierPalette(kid, tier));
 
   // tier + prize readouts
-  const nextAt = weeksCompleted(kid) + 1;
   document.getElementById('tier-'+kid).innerHTML =
     `<span class="te">${T.badge}</span>`+
     `<span class="tn">WORLD ${tier+1}/8 — ${T.name}<br><span class="tx">${T.gear}</span></span>`+
-    `<span class="tx">${tier >= MAX_TIER ? 'MAX' : 'NEXT: WK ' + nextAt}</span>`;
+    `<span class="tx">${tier >= MAX_TIER ? 'MAX' : sp.toGo + ' DAY' + (sp.toGo===1?'':'S') + ' TO GO'}</span>`;
 
   const pGoal = settings.goalDays || 20;
   const pDone = cleared(kid).length;
@@ -1176,15 +1172,16 @@ function renderRoute(kid){
 }
 
 function renderBadges(kid){
-  const weeks = weeksCompleted(kid);
+  const won = worldsUnlocked(kid);
+  const goal = streakGoalOf();
   const wrap = document.getElementById('badges-'+kid);
   wrap.innerHTML='';
   TIERS.slice(1).forEach((t,i)=>{
-    const need = i+1;
+    const need = i+1, days = need*goal;
     const d = document.createElement('div');
-    d.className = 'badge' + (weeks >= need ? ' earned' : '');
-    d.title = t.name + ' — ' + need + ' full week' + (need===1?'':'s');
-    d.innerHTML = t.badge + `<small>W${need}</small>`;
+    d.className = 'badge' + (won >= need ? ' earned' : '');
+    d.title = t.name + ' — ' + days + ' days in a row';
+    d.innerHTML = t.badge + `<small>${days}d</small>`;
     wrap.appendChild(d);
   });
 }
@@ -1314,17 +1311,22 @@ function weekDates(weekStart){
   for(let i = 0; i < 7; i++){ out.push(d.toLocaleDateString('en-CA')); d.setDate(d.getDate() + 1); }
   return out;
 }
-function weekGoalOf(){ return Math.max(1, Math.min(7, settings.weekGoal || 7)); }
-function clearedThisWeek(kid){
-  const set = new Set(log[kid]);
-  return weekDates(mondayOf(dateStr)).filter(d => set.has(d));
+/* days in a row needed for the next world (stored under the old key) */
+function streakGoalOf(){ return Math.max(1, Math.min(14, settings.weekGoal || 7)); }
+
+/* Worlds are earned from the LONGEST run ever, so a missed day never takes
+   one away — the badge stays won even if the current streak resets. */
+function worldsUnlocked(kid){
+  return Math.min(Math.floor(bestStreak(kid) / streakGoalOf()), MAX_TIER);
 }
-function weeksCompleted(kid){
-  const goal = weekGoalOf(), tally = {};
-  log[kid].forEach(d => { const w = mondayOf(d); tally[w] = (tally[w] || 0) + 1; });
-  return Object.keys(tally).filter(w => tally[w] >= goal).length;
+function tierOf(kid){ return worldsUnlocked(kid); }
+
+/* how far into the current run they are, toward the next world */
+function streakProgress(kid){
+  const goal = streakGoalOf();
+  const run  = streakOf(kid);
+  return {run, goal, into: run % goal, toGo: goal - (run % goal)};
 }
-function tierOf(kid){ return Math.min(weeksCompleted(kid), MAX_TIER); }
 
 function renderQuest(){
   document.getElementById('goalLabel').textContent = 'QUEST: '+settings.goalDays+' PERFECT MORNINGS';
@@ -1365,7 +1367,7 @@ async function onToggle(kid, id, on){
   on ? sfx.tick() : sfx.untick();
 
   const beforeLvl = levelOf(kid), beforeN = cleared(kid).length;
-  const beforeWeeks = weeksCompleted(kid);
+  const beforeWeeks = worldsUnlocked(kid);
   const result = await rebank(kid, dateStr, dayState[kid]);
   if(result){
     refresh(kid);
@@ -1435,7 +1437,7 @@ async function toggleDayTask(id){
   if(ds === dateStr) dayState[kid] = state;
 
   const beforeLvl = levelOf(kid), beforeN = cleared(kid).length;
-  const beforeWeeks = weeksCompleted(kid);
+  const beforeWeeks = worldsUnlocked(kid);
   const result = await rebank(kid, ds, state);
 
   renderDayTasks();
@@ -1443,7 +1445,7 @@ async function toggleDayTask(id){
   refresh(kid);
 
   if(result === 'banked'){
-    if(ds === dateStr || weeksCompleted(kid) > beforeWeeks){
+    if(ds === dateStr || worldsUnlocked(kid) > beforeWeeks){
       celebrate(kid, beforeLvl, beforeN, beforeWeeks);
     } else { sfx.badge(); confetti(26); }
   }
@@ -1499,7 +1501,7 @@ function celebrate(kid, beforeLvl, beforeN, beforeWeeks){
   const newBadge = BADGES.find(b=>b.at>beforeN && b.at<=n);
   const leveled = levelOf(kid) > beforeLvl;
 
-  const weeksNow = weeksCompleted(kid);
+  const weeksNow = worldsUnlocked(kid);
   const newWorld = (typeof beforeWeeks === 'number') && weeksNow > beforeWeeks;
 
   let title = isF ? 'FLYNN CLEARED IT!' : 'AVERY CLEARED IT!';
@@ -1507,8 +1509,8 @@ function celebrate(kid, beforeLvl, beforeN, beforeWeeks){
 
   if(newWorld){
     const T = TIERS[Math.min(weeksNow, MAX_TIER)];
-    title = 'WEEK COMPLETE! ' + T.badge;
-    text  = `A whole week of perfect mornings! New world unlocked: ${T.name}. ${T.gear}.`;
+    title = streakOf(kid) + ' DAYS IN A ROW! ' + T.badge;
+    text  = `New world unlocked: ${T.name}. ${T.gear}.`;
   } else if(newBadge){
     title = 'BADGE EARNED! '+newBadge.icon;
     text  = `${n} perfect mornings — that's a new badge!`;
@@ -1564,7 +1566,7 @@ function buildModal(){
     }
   });
   document.getElementById('goalDays').value = settings.goalDays;
-  document.getElementById('weekGoal').value = weekGoalOf();
+  document.getElementById('weekGoal').value = streakGoalOf();
   document.getElementById('prizeText').value = settings.prizeText;
   document.getElementById('startDate').value = settings.challengeStart || dateStr;
   const box = document.getElementById('backupBox');
@@ -1578,7 +1580,7 @@ async function save(){
     settings.library[kid] = parseInt(document.getElementById('lib-'+kid).value,10);
   });
   settings.goalDays = Math.max(1, Math.min(31, parseInt(document.getElementById('goalDays').value,10)||20));
-  settings.weekGoal = Math.max(1, Math.min(7, parseInt(document.getElementById('weekGoal').value,10)||7));
+  settings.weekGoal = Math.max(1, Math.min(14, parseInt(document.getElementById('weekGoal').value,10)||7));
   settings.prizeText = document.getElementById('prizeText').value.trim() || DEFAULTS.prizeText;
   const sd = document.getElementById('startDate').value;
   if(/^\d{4}-\d{2}-\d{2}$/.test(sd)) settings.challengeStart = sd;
